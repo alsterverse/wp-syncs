@@ -31,6 +31,8 @@ class Syncs_Test extends \WP_UnitTestCase {
 	}
 
 	public function test_save_post() {
+		$this->assertFalse( $this->syncs->save_post( 0, null ) );
+
 		$post_id = $this->factory->post->create();
 		$post    = get_post( $post_id );
 
@@ -56,6 +58,8 @@ class Syncs_Test extends \WP_UnitTestCase {
 	}
 
 	public function test_save_term() {
+		$this->assertFalse( $this->syncs->save_term( 0, 0, 'category' ) );
+
 		$term_id = $this->factory->category->create();
 		$term    = get_category( $term_id );
 
