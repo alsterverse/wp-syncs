@@ -1,0 +1,77 @@
+<?php
+
+namespace Isotop\Tests\Syncs;
+
+use Isotop\Syncs\Syncs;
+
+class Syncs_Test extends \WP_UnitTestCase {
+
+	public function setUp() {
+		parent::setUp();
+
+		$this->syncs = Syncs::instance();
+
+		$this->factory->blog->create( [
+			'domain' => 'example.org',
+			'path'   => '/foo/'
+		] );
+	}
+
+	public function tearDown() {
+		parent::tearDown();
+
+		unset( $this->syncs );
+	}
+
+	public function test_save_post() {
+		$post_id = $this->factory->post->create();
+		$post    = get_post( $post_id );
+
+		// Not a valid post type.
+		$this->assertFalse( $this->syncs->save_post( $post_id, $post ) );
+
+		add_filter( 'syncs_post_types', function () {
+			return ['post'];
+		} );
+
+		$this->assertTrue( $this->syncs->save_post( $post_id, get_post( $post_id ) ) );
+
+		switch_to_blog( 2 );
+
+		$posts = get_posts();
+
+		// Should not be same post id since it's synced on the same site.
+		$this->assertNotSame( $posts[0]->post_id, $post_id );
+
+		// But post title should match since it's the same post.
+		$this->assertSame( $posts[0]->post_title, $post->post_title );
+
+		restore_current_blog();
+	}
+
+	public function test_save_term() {
+		$term_id = $this->factory->category->create();
+		$term    = get_category( $term_id );
+
+		// Not a valid taxonomy.
+		$this->assertFalse( $this->syncs->save_term( $term_id, 0, 'category' ) );
+
+		add_filter( 'syncs_taxonomies', function () {
+			return ['category'];
+		} );
+
+		$this->assertTrue( $this->syncs->save_term( $term_id, 0, 'category' ) );
+
+		switch_to_blog( 2 );
+
+		$terms = get_categories( ['hide_empty' => false] );
+
+		// Should not be same term id since it's synced on the same site.
+		$this->assertNotSame( $terms[0]->term_id, $term_id );
+
+		// But category name should match since it's the same category.
+		$this->assertSame( $term[0]->name, $term->name );
+
+		restore_current_blog();
+	}
+}

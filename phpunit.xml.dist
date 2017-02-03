@@ -14,6 +14,9 @@
   syntaxCheck="true"
   verbose="true"
   >
+  <php>
+    <const name="WP_TESTS_MULTISITE" value="1" />
+  </php>
   <testsuites>
     <testsuite name="Syncs Test Suite">
       <directory suffix=".php">./tests/</directory>

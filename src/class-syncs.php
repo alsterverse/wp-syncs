@@ -26,7 +26,7 @@ class Syncs {
 	protected static $instance;
 
 	/**
-	 * Post types.
+	 * Syncs post types.
 	 *
 	 * @var array.
 	 */
@@ -38,6 +38,13 @@ class Syncs {
 	 * @var string
 	 */
 	protected $taxonomy;
+
+	/**
+	 * Syncs taxonomies.
+	 *
+	 * @var array
+	 */
+	protected $taxonomies;
 
 	/**
 	 * Get class instance.
@@ -60,7 +67,7 @@ class Syncs {
 		$this->current_blog_id = get_current_blog_id();
 
 		// Setup action for save post.
-		add_action( 'save_post', [$this, 'save_post'], 999 );
+		add_action( 'save_post', [$this, 'save_post'], 999, 2 );
 
 		// Setup actions for save term.
 		add_action( 'created_term', [$this, 'save_term'], 999, 3 );
@@ -68,7 +75,7 @@ class Syncs {
 	}
 
 	/**
-	 * Get post types.
+	 * Get post types that should be allowed to sync.
 	 *
 	 * @return array
 	 */
@@ -93,20 +100,53 @@ class Syncs {
 	}
 
 	/**
+	 * Get taxonomies that should be allowed to sync.
+	 *
+	 * @return array
+	 */
+	protected function get_taxonomies() {
+		if ( empty( $this->taxonomies ) ) {
+			$taxonomies = get_taxonomies( ['syncs' => true] );
+			$taxonomies = array_values( $taxonomies );
+			$taxonomies = array_unique( $taxonomies );
+
+			/**
+			 * Let developers modify taxonomies array.
+			 *
+			 * @param array $taxonomies
+			 */
+			$taxonomies = apply_filters( 'syncs_taxonomies', $taxonomies );
+			$taxonomies = is_array( $taxonomies ) ? $taxonomies : [];
+
+			$this->taxonomies = $taxonomies;
+		}
+
+		return $this->taxonomies;
+	}
+
+	/**
 	 * Save post action callback.
 	 *
-	 * @param  int $post_id
+	 * @param  int      $post_id
+	 * @param  \WP_Post $post
+	 *
+	 * @return bool
 	 */
-	public function save_post( int $post_id ) {
+	public function save_post( int $post_id, $post ) {
 		if ( is_multisite() && ms_is_switched() ) {
-			return;
+			return false;
 		}
 
 		if ( empty( $post_id ) ) {
-			return;
+			return false;
 		}
 
-		$this->sync( $post_id, 'post' );
+		// Bail if post type shoulnd't be synced.
+		if ( ! in_array( $post->post_type, $this->get_post_types() ) ) {
+			return false;
+		}
+
+		return $this->sync( $post_id, 'post' );
 	}
 
 	/**
@@ -118,16 +158,21 @@ class Syncs {
 	 */
 	public function save_term( int $term_id, int $tt_id, string $taxonomy ) {
 		if ( is_multisite() && ms_is_switched() ) {
-			return;
+			return false;
 		}
 
 		if ( empty( $term_id ) ) {
-			return;
+			return false;
+		}
+
+		// Bail if taxonomy shoulnd't be synced.
+		if ( ! in_array( $taxonomy, $this->get_taxonomies() ) ) {
+			return false;
 		}
 
 		$this->taxonomy = $taxonomy;
 
-		$this->sync( $term_id, 'term' );
+		return $this->sync( $term_id, 'term' );
 	}
 
 	/**
@@ -340,5 +385,7 @@ class Syncs {
 
 			restore_current_blog();
 		}
+
+		return true;
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Isotop\Tests\Syncs\Database;
+namespace Isotop\Tests\Syncs;
 
 use Isotop\Syncs\Database;
 
