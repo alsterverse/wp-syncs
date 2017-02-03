@@ -10,11 +10,18 @@ class Syncs_Test extends \WP_UnitTestCase {
 		parent::setUp();
 
 		$this->syncs = Syncs::instance();
+	}
 
-		$this->factory->blog->create( [
+	public static function wpSetUpBeforeClass( $factory ) {
+		$factory->blog->create( [
 			'domain' => 'example.org',
 			'path'   => '/foo/'
 		] );
+	}
+
+	public static function wpTearDownAfterClass() {
+		wpmu_delete_blog( 2, true );
+		wp_update_network_site_counts();
 	}
 
 	public function tearDown() {
@@ -40,9 +47,6 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		$posts = get_posts();
 
-		// Should not be same post id since it's synced on the same site.
-		$this->assertNotSame( $posts[0]->post_id, $post_id );
-
 		// But post title should match since it's the same post.
 		$this->assertSame( $posts[0]->post_title, $post->post_title );
 
@@ -66,11 +70,8 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		$terms = get_categories( ['hide_empty' => false] );
 
-		// Should not be same term id since it's synced on the same site.
-		$this->assertNotSame( $terms[0]->term_id, $term_id );
-
 		// But category name should match since it's the same category.
-		$this->assertSame( $term[0]->name, $term->name );
+		$this->assertSame( $terms[0]->name, $term->name );
 
 		restore_current_blog();
 	}
