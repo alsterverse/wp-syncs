@@ -1,0 +1,44 @@
+{
+  "name": "isotopsweden/wp-syncs",
+  "type": "wordpress-muplugin",
+  "license": "MIT",
+  "description": "Syncs synchronizes posts and terms between multisites",
+  "homepage": "https://github.com/isotopsweden/wp-syncs",
+  "authors": [
+    {
+      "name": "Fredrik Forsmo",
+      "email": "fredrik.forsmo@isotop.se",
+      "homepage": "https://github.com/frozzare"
+    }
+  ],
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "syncs",
+    "multisite",
+    "post",
+    "term"
+  ],
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
+  },
+  "require": {
+    "php": "^7.0",
+    "composer/installers": "~1.0"
+  },
+  "require-dev": {
+    "frozzare/wp-test-suite": "~1.0",
+    "isotopsweden/isotopcs": "dev-master"
+  },
+  "scripts": {
+    "config-isotopcs": [
+      "if [ -f vendor/bin/phpcs ]; then \"vendor/bin/phpcs\" --config-set installed_paths ../../../vendor/wp-coding-standards/wpcs,../../../vendor/isotopsweden/isotopcs; fi",
+      "if [ -f vendor/bin/phpcs ]; then \"vendor/bin/phpcs\" --config-set default_standard Isotop; fi"
+    ],
+    "post-install-cmd": "composer config-isotopcs",
+    "post-update-cmd": "composer config-isotopcs"
+  },
+  "prefer-stable": true
+}

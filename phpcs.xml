@@ -1,0 +1,8 @@
+<?php xml version="1.0"?>
+<ruleset name="Syncs">
+  <description>Syncs rules for PHP_CodeSniffer</description>
+
+  <exclude-pattern>vendor/*</exclude-pattern>
+
+  <rule ref="Isotop"></rule>
+</ruleset>
