@@ -50,6 +50,21 @@ class Syncs_Test extends \WP_UnitTestCase {
 		$posts = get_posts();
 
 		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 2, count( $posts ) );
+
+		// But post title should match since it's the same post.
+		$this->assertSame( $posts[0]->post_title, $post->post_title );
+
+		restore_current_blog();
+
+		$this->assertTrue( $this->syncs->save_post( $post_id, get_post( $post_id ) ) );
+
+		switch_to_blog( 2 );
+
+		$posts = get_posts();
+
+		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 2, count( $posts ) );
 
 		// But post title should match since it's the same post.
 		$this->assertSame( $posts[0]->post_title, $post->post_title );
@@ -77,6 +92,21 @@ class Syncs_Test extends \WP_UnitTestCase {
 		$terms = get_categories( ['hide_empty' => false] );
 
 		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 2, count( $terms ) );
+
+		// But category name should match since it's the same category.
+		$this->assertSame( $terms[0]->name, $term->name );
+
+		restore_current_blog();
+
+		$this->assertTrue( $this->syncs->save_term( $term_id, 0, 'category' ) );
+
+		switch_to_blog( 2 );
+
+		$terms = get_categories( ['hide_empty' => false] );
+
+		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 2, count( $terms ) );
 
 		// But category name should match since it's the same category.
 		$this->assertSame( $terms[0]->name, $term->name );
