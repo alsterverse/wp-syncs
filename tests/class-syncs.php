@@ -47,6 +47,8 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		$posts = get_posts();
 
+		$this->assertSame( 2, get_current_blog_id() );
+
 		// But post title should match since it's the same post.
 		$this->assertSame( $posts[0]->post_title, $post->post_title );
 
@@ -69,6 +71,8 @@ class Syncs_Test extends \WP_UnitTestCase {
 		switch_to_blog( 2 );
 
 		$terms = get_categories( ['hide_empty' => false] );
+
+		$this->assertSame( 2, get_current_blog_id() );
 
 		// But category name should match since it's the same category.
 		$this->assertSame( $terms[0]->name, $term->name );
