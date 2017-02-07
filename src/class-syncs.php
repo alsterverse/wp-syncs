@@ -267,6 +267,10 @@ class Syncs {
 			return false;
 		}
 
+		// Set a custom based dir.
+		$dir['basedir'] = defined( 'UPLOADS' ) ? ABSPATH . UPLOADS : WP_CONTENT_DIR . '/uploads';
+		$dir['basedir'] = rtrim( $dir['basedir'], '/' ) . '/';
+
 		// Get all sites that we should sync.
 		$sites = get_sites( ['network' => 1, 'limit' => 1000] );
 
@@ -285,13 +289,19 @@ class Syncs {
 
 			// Copy all sizes between sites.
 			foreach ( array_values( $data['sizes'] ) as $size ) {
-				$from = sprintf( '%s/%s', $dir['path'], $size['file'] );
-				$to = sprintf( '%s/sites/%s%s/%s', $dir['basedir'], $site->blog_id, $dir['subdir'], $size['file'] );
+				// Different directories if the blog is one or not.
+				$sitedir = intval( $site->blog_id ) === 1 ? '' : 'sites/' . $site->blog_id;
 
+				// Setup from path and to path.
+				$from = sprintf( '%s/%s', $dir['path'], $size['file'] );
+				$to = sprintf( '%s%s%s/%s', $dir['basedir'], $sitedir, ltrim( $dir['subdir'], '/' ), $size['file'] );
+
+				// Create directories if they don't exists.
 				if ( ! file_exists( dirname( $to ) ) && ! is_dir( dirname( $to ) ) ) {
 					wp_mkdir_p( dirname( $to ) );
 				}
 
+				// Copy file from path to path.
 				copy( $from, $to );
 			}
 
