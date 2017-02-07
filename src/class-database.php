@@ -67,6 +67,7 @@ class Database {
 	public function get( int $object_id, string $object_type, string $key = 'sync_id', int $site_id = 0 ) {
 		global $wpdb;
 
+
 		$value = $wpdb->get_results( $wpdb->prepare( // wpcs: unprepared SQL
 			"SELECT {$key} FROM `{$this->get_table()}` WHERE object_id = %d AND object_type = '%s' AND site_id = %d", // wpcs: unprepared SQL
 			$object_id,
@@ -78,7 +79,7 @@ class Database {
 			return 0;
 		}
 
-		return intval( $value[0]->$key );
+		return isset( $value[0]->$key ) ? intval( $value[0]->$key ) : 0;
 	}
 
 	/**

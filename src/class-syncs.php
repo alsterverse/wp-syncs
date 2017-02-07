@@ -225,7 +225,7 @@ class Syncs {
 	 *
 	 * @return bool
 	 */
-	protected function delete( $object_id, $object_type ) {
+	protected function delete( int $object_id, string $object_type ) {
 		switch ( $object_type ) {
 			case 'post':
 				return wp_delete_post( $object_id, true ) !== false;
@@ -240,10 +240,11 @@ class Syncs {
 	 * Create object on site.
 	 *
 	 * @param  array $object
+	 * @param  int   $sync_id
 	 *
 	 * @return bool|int
 	 */
-	protected function create( $object ) {
+	protected function create( array $object, int $sync_id ) {
 		$object_id = 0;
 
 		// Bail if keys don't exists.
@@ -325,6 +326,9 @@ class Syncs {
 			}
 		}
 
+		// Add our own sync id as a meta key, nothing we use but can be useful for others.
+		update_metadata( $object['type'], $object_id, 'sync_id', $sync_id );
+
 		return $object_id;
 	}
 
@@ -336,7 +340,7 @@ class Syncs {
 	 *
 	 * @return array
 	 */
-	public function get( $object_id, $object_type ) {
+	public function get( int $object_id, string $object_type ) {
 		$object = [
 			'data' => [],
 			'meta' => get_metadata( $object_type, $object_id ),
@@ -358,6 +362,19 @@ class Syncs {
 	}
 
 	/**
+	 * Get sync id for given object and site id.
+	 *
+	 * @param  int    $object_id
+	 * @param  string $object_type
+	 * @param  int    $site_id
+	 *
+	 * @return int
+	 */
+	public function get_sync_id( int $object_id, string $object_type, int $site_id = 0 ) {
+		return $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
+	}
+
+	/**
 	 * Sync object from one site to other sites in the network.
 	 *
 	 * @param  int    $object_id
@@ -366,7 +383,7 @@ class Syncs {
 	 *
 	 * @return bool
 	 */
-	public function sync( $object_id, $object_type, $action = 'create' ) {
+	public function sync( int $object_id, string $object_type, string $action = 'create' ) {
 		// Get sync id if any exists.
 		$sync_id = $this->database->get( $object_id, $object_type );
 
@@ -417,7 +434,7 @@ class Syncs {
 
 			// Create object on the current site and if it returns a int id, then it ways a success.
 			if ( $action === 'create' ) {
-				$object_id = $this->create( $object );
+				$object_id = $this->create( $object, $sync_id );
 
 				// Bail if object is empty.
 				if ( empty( $object_id ) ) {
