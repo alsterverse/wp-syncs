@@ -69,9 +69,51 @@ class Syncs {
 		// Setup action for save post.
 		add_action( 'save_post', [$this, 'save_post'], 999, 2 );
 
+		// Setup action for delete post.
+		add_action( 'delete_post', [$this, 'delete_post'], 999 );
+
 		// Setup actions for save term.
 		add_action( 'created_term', [$this, 'save_term'], 999, 3 );
 		add_action( 'edited_term', [$this, 'save_term'], 999, 3 );
+
+		// Setup actons for delete term.
+		add_action( 'delete_term', [$this, 'delete_term'], 999 );
+	}
+
+	/**
+	 * Delete post action callback.
+	 *
+	 * @param  int $post_id
+	 *
+	 * @return bool
+	 */
+	public function delete_post( $post_id ) {
+		if ( is_multisite() && ms_is_switched() ) {
+			return false;
+		}
+
+		if ( empty( $post_id ) ) {
+			return false;
+		}
+
+		return $this->sync( $post_id, 'post', 'delete' );
+	}
+
+	/**
+	 * Delete term action callback.
+	 *
+	 * @param  int $term_id
+	 */
+	public function delete_term( int $term_id ) {
+		if ( is_multisite() && ms_is_switched() ) {
+			return false;
+		}
+
+		if ( empty( $term_id ) ) {
+			return false;
+		}
+
+		return $this->sync( $term_id, 'term', 'delete' );
 	}
 
 	/**
@@ -320,10 +362,11 @@ class Syncs {
 	 *
 	 * @param  int    $object_id
 	 * @param  string $object_type
+	 * @param  string $action
 	 *
 	 * @return bool
 	 */
-	public function sync( $object_id, $object_type ) {
+	public function sync( $object_id, $object_type, $action = 'create' ) {
 		// Get sync id if any exists.
 		$sync_id = $this->database->get( $object_id, $object_type );
 
@@ -373,17 +416,23 @@ class Syncs {
 			}
 
 			// Create object on the current site and if it returns a int id, then it ways a success.
-			$object_id = $this->create( $object );
+			if ( $action === 'create' ) {
+				$object_id = $this->create( $object );
 
-			// Bail if object is empty.
-			if ( empty( $object_id ) ) {
-				continue;
+				// Bail if object is empty.
+				if ( empty( $object_id ) ) {
+					continue;
+				}
+
+				// Create a new row with new object id and new sync id.
+				$this->database->create( $object_id, $object_type, $sync_id );
 			}
 
-			// Create a new row with new object id and new sync id.
-			$this->database->create( $object_id, $object_type, $sync_id );
-
 			restore_current_blog();
+		}
+
+		if ( $action === 'delete' ) {
+			$this->database->delete( $object_id, $object_type );
 		}
 
 		return true;

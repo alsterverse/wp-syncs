@@ -30,7 +30,7 @@ class Syncs_Test extends \WP_UnitTestCase {
 		unset( $this->syncs );
 	}
 
-	public function test_save_post() {
+	public function test_post() {
 		$this->assertFalse( $this->syncs->save_post( 0, null ) );
 
 		$post_id = $this->factory->post->create();
@@ -70,9 +70,37 @@ class Syncs_Test extends \WP_UnitTestCase {
 		$this->assertSame( $posts[0]->post_title, $post->post_title );
 
 		restore_current_blog();
+
+		$this->assertTrue( $this->syncs->delete_post( $post_id ) );
+
+		switch_to_blog( 2 );
+
+		$posts = get_posts();
+
+		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 1, count( $posts ) );
+
+		// Post title shouldn't match the default post since we deleted our post.
+		$this->assertNotSame( $posts[0]->post_title, $post->post_title );
+
+		restore_current_blog();
+
+		$this->assertTrue( $this->syncs->delete_post( $post_id ) );
+
+		switch_to_blog( 2 );
+
+		$posts = get_posts();
+
+		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 1, count( $posts ) );
+
+		// Post title shouldn't match the default post since we deleted our post.
+		$this->assertNotSame( $posts[0]->post_title, $post->post_title );
+
+		restore_current_blog();
 	}
 
-	public function test_save_term() {
+	public function test_term() {
 		$this->assertFalse( $this->syncs->save_term( 0, 0, 'category' ) );
 
 		$term_id = $this->factory->category->create();
@@ -110,6 +138,20 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		// But category name should match since it's the same category.
 		$this->assertSame( $terms[0]->name, $term->name );
+
+		restore_current_blog();
+
+		$this->assertTrue( $this->syncs->delete_term( $term_id, 0, 'category' ) );
+
+		switch_to_blog( 2 );
+
+		$terms = get_categories( ['hide_empty' => false] );
+
+		$this->assertSame( 2, get_current_blog_id() );
+		$this->assertSame( 1, count( $terms ) );
+
+		// Category name should not match the default name.
+		$this->assertNotSame( $terms[0]->name, $term->name );
 
 		restore_current_blog();
 	}
