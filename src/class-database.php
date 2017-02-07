@@ -16,16 +16,17 @@ class Database {
 	 *
 	 * @param  int    $object_id
 	 * @param  string $object_type
+	 * @param  int    $site_id
 	 *
 	 * @return bool
 	 */
-	public function delete( int $object_id, string $object_type ) {
+	public function delete( int $object_id, string $object_type, int $site_id = 0 ) {
 		global $wpdb;
 
 		return (bool) $wpdb->delete( $this->get_table(), [
 			'object_id'   => $object_id,
 			'object_type' => $object_type,
-			'site_id'     => get_current_blog_id()
+			'site_id'     => $site_id === 0 ? get_current_blog_id() : $site_id
 		], ['%d', '%s', '%d'] );
 	}
 
@@ -35,10 +36,11 @@ class Database {
 	 * @param  int    $object_id
 	 * @param  string $object_type
 	 * @param  int    $sync_id
+	 * @param  int    $site_id
 	 *
 	 * @return bool|int
 	 */
-	public function create( $object_id, $object_type, $sync_id = 0 ) {
+	public function create( int $object_id, string $object_type, int $sync_id = 0, int $site_id = 0 ) {
 		global $wpdb;
 
 		if ( empty( $sync_id ) ) {
@@ -49,7 +51,7 @@ class Database {
 			'sync_id'     => $sync_id,
 			'object_id'   => $object_id,
 			'object_type' => $object_type,
-			'site_id'     => get_current_blog_id(),
+			'site_id'     => $site_id === 0 ? get_current_blog_id() : $site_id,
 			'created_at'  => current_time( 'mysql' )
 		], ['%d', '%d', '%s', '%d', '%s'] );
 	}
@@ -87,17 +89,18 @@ class Database {
 	 *
 	 * @param  string $object_type
 	 * @param  int    $sync_id
+	 * @param  int    $site_id
 	 *
 	 * @return int
 	 */
-	public function get_object_id( string $object_type, int $sync_id ) {
+	public function get_object_id( string $object_type, int $sync_id, int $site_id = 0 ) {
 		global $wpdb;
 
 		$value = $wpdb->get_results( $wpdb->prepare( // wpcs: unprepared SQL
 			"SELECT object_id FROM `{$this->get_table()}` WHERE object_type = '%s' AND sync_id = %d AND site_id = %d", // wpcs: unprepared SQL
 			$object_type,
 			$sync_id,
-			get_current_blog_id()
+			$site_id === 0 ? get_current_blog_id() : $site_id
 		) );
 
 		if ( empty( $value ) ) {
@@ -115,7 +118,7 @@ class Database {
 	public function get_last_sync_id() {
 		global $wpdb;
 
-		$value = $wpdb->get_results( "SELECT sync_id FROM `{$this->get_table()}` ORDER BY id DESC LIMIT 1" ); // wpcs: unprepared SQL
+		$value = $wpdb->get_results( "SELECT MAX(sync_id) FROM `{$this->get_table()}` ORDER BY id DESC LIMIT 1" ); // wpcs: unprepared SQL
 
 		if ( empty( $value ) ) {
 			return 0;

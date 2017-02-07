@@ -67,8 +67,6 @@ class Syncs {
 		$this->current_blog_id = get_current_blog_id();
 
 		// Setup action for save attachment.
-		add_action( 'add_attachment', [$this, 'save_post'], 999 );
-		add_action( 'edit_attachment', [$this, 'save_post'] , 999 );
 		add_action( 'wp_update_attachment_metadata', [$this, 'update_attachment_metadata'], 999, 2 );
 
 		// Setup action for delete attachment.
@@ -495,6 +493,11 @@ class Syncs {
 			return false;
 		}
 
+		// Be sure to delete sync id for this object if delete action.
+		if ( $action === 'delete' ) {
+			$this->database->delete( $object_id, $object_type, $this->current_blog_id );
+		}
+
 		// Get object that should be synced to other sites.
 		$object = $this->get( $object_id, $object_type );
 
@@ -540,10 +543,6 @@ class Syncs {
 			}
 
 			restore_current_blog();
-		}
-
-		if ( $action === 'delete' ) {
-			$this->database->delete( $object_id, $object_type );
 		}
 
 		return true;
