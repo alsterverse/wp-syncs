@@ -124,7 +124,13 @@ class Database {
 			return 0;
 		}
 
-		return intval( $value[0]->sync_id );
+		$value = ( (array) ( $value[0] ) )['MAX(sync_id)'];
+
+		if ( empty( $value ) ) {
+			return 0;
+		}
+
+		return intval( $value );
 	}
 
 	/**
