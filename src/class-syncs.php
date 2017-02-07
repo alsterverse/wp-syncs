@@ -66,18 +66,26 @@ class Syncs {
 		$this->database = new Database;
 		$this->current_blog_id = get_current_blog_id();
 
+		// Setup action for save attachment.
+		add_action( 'add_attachment', [$this, 'save_post'], 999 );
+		add_action( 'edit_attachment', [$this, 'save_post'] , 999 );
+		add_action( 'wp_update_attachment_metadata', [$this, 'update_attachment_metadata'], 999, 2 );
+
+		// Setup action for delete attachment.
+		add_action( 'delete_attachment', [$this, 'delete_post'], 999 );
+
 		// Setup action for save post.
 		add_action( 'save_post', [$this, 'save_post'], 999, 2 );
 
-		// Setup action for delete post.
-		add_action( 'delete_post', [$this, 'delete_post'], 999 );
+		// Setup action for before delete post.
+		add_action( 'before_delete_post', [$this, 'delete_post'], 999 );
 
 		// Setup actions for save term.
 		add_action( 'created_term', [$this, 'save_term'], 999, 3 );
 		add_action( 'edited_term', [$this, 'save_term'], 999, 3 );
 
 		// Setup actons for delete term.
-		add_action( 'delete_term', [$this, 'delete_term'], 999 );
+		add_action( 'delete_term', [$this, 'delete_term'], 999, 3 );
 	}
 
 	/**
@@ -96,15 +104,25 @@ class Syncs {
 			return false;
 		}
 
+		if ( ! ( $post = get_post( $post_id ) ) ) {
+			return false;
+		}
+
+		if ( ! in_array( $post->post_type, $this->get_post_types() ) ) {
+			return false;
+		}
+
 		return $this->sync( $post_id, 'post', 'delete' );
 	}
 
 	/**
 	 * Delete term action callback.
 	 *
-	 * @param  int $term_id
+	 * @param  int    $term_id
+	 * @param  int    $tt_id
+	 * @param  string $taxonomy
 	 */
-	public function delete_term( int $term_id ) {
+	public function delete_term( int $term_id, int $tt_id, string $taxonomy ) {
 		if ( is_multisite() && ms_is_switched() ) {
 			return false;
 		}
@@ -112,6 +130,12 @@ class Syncs {
 		if ( empty( $term_id ) ) {
 			return false;
 		}
+
+		if ( ! in_array( $taxonomy, $this->get_taxonomies() ) ) {
+			return false;
+		}
+
+		$this->taxonomy = $taxonomy;
 
 		return $this->sync( $term_id, 'term', 'delete' );
 	}
@@ -174,16 +198,19 @@ class Syncs {
 	 *
 	 * @return bool
 	 */
-	public function save_post( int $post_id, $post ) {
+	public function save_post( int $post_id, $post = null ) {
 		if ( is_multisite() && ms_is_switched() ) {
 			return false;
+		}
+
+		if ( empty( $post ) ) {
+			$post = get_post( $post_id );
 		}
 
 		if ( empty( $post_id ) ) {
 			return false;
 		}
 
-		// Bail if post type shoulnd't be synced.
 		if ( ! in_array( $post->post_type, $this->get_post_types() ) ) {
 			return false;
 		}
@@ -207,7 +234,6 @@ class Syncs {
 			return false;
 		}
 
-		// Bail if taxonomy shoulnd't be synced.
 		if ( ! in_array( $taxonomy, $this->get_taxonomies() ) ) {
 			return false;
 		}
@@ -215,6 +241,73 @@ class Syncs {
 		$this->taxonomy = $taxonomy;
 
 		return $this->sync( $term_id, 'term' );
+	}
+
+	/**
+	 * Sync images to other sites on update attachment metadata.
+	 *
+	 * @param  array $data
+	 * @param  int   $post_id
+	 *
+	 * @return bool
+	 */
+	public function update_attachment_metadata( $data, $post_id ) {
+		// Be sure to sync the post first.
+		if ( ! $this->save_post( $post_id ) ) {
+			return false;
+		}
+
+		// Bail if it's a large network.
+		if ( wp_is_large_network() ) {
+			return false;
+		}
+
+		$dir = wp_upload_dir();
+
+		// Bail if upload directory is empty.
+		if ( empty( $dir ) ) {
+			return false;
+		}
+
+		// Get all sites that we should sync.
+		$sites = get_sites( ['network' => 1, 'limit' => 1000] );
+
+		foreach ( $sites as $site ) {
+			// Don't sync post on the current site.
+			if ( intval( $site->blog_id ) === $this->current_blog_id ) {
+				continue;
+			}
+
+			switch_to_blog( $site->blog_id );
+
+			// Add default size as a size.
+			$data['sizes'][] = [
+				'file' => basename( $data['file'] ),
+			];
+
+			// Copy all sizes between sites.
+			foreach ( array_values( $data['sizes'] ) as $size ) {
+				$from = sprintf( '%s/%s', $dir['path'], $size['file'] );
+				$to = sprintf( '%s/sites/%s%s/%s', $dir['basedir'], $site->blog_id, $dir['subdir'], $size['file'] );
+
+				if ( ! file_exists( dirname( $to ) ) && ! is_dir( dirname( $to ) ) ) {
+					wp_mkdir_p( dirname( $to ) );
+				}
+
+				copy( $from, $to );
+			}
+
+			// Update attachment metadata between sites.
+			if ( $sync_id = $this->database->get( $post_id, 'post', 'sync_id', $this->current_blog_id ) ) {
+				if ( $object_id = $this->database->get_object_id( 'post', $sync_id ) ) {
+					update_post_meta( $object_id, '_wp_attachment_metadata', $data );
+				}
+			}
+
+			restore_current_blog();
+		}
+
+		return $data;
 	}
 
 	/**
@@ -405,6 +498,7 @@ class Syncs {
 		// Get object that should be synced to other sites.
 		$object = $this->get( $object_id, $object_type );
 
+		// Get all sites that we should sync.
 		$sites = get_sites( ['network' => 1, 'limit' => 1000] );
 
 		foreach ( $sites as $site ) {
@@ -442,7 +536,7 @@ class Syncs {
 				}
 
 				// Create a new row with new object id and new sync id.
-				$this->database->create( $object_id, $object_type, $sync_id );
+				$created = $this->database->create( $object_id, $object_type, $sync_id );
 			}
 
 			restore_current_blog();
