@@ -290,11 +290,37 @@ class Syncs {
 			// Copy all sizes between sites.
 			foreach ( array_values( $data['sizes'] ) as $size ) {
 				// Different directories if the blog is one or not.
-				$sitedir = intval( $site->blog_id ) === 1 ? '' : 'sites/' . $site->blog_id;
+				$sitedir = intval( $site->blog_id ) === 1 ? '' : 'sites/' . $site->blog_id . '/';
 
-				// Setup from path and to path.
+				// Setup from path.
 				$from = sprintf( '%s/%s', $dir['path'], $size['file'] );
+
+				/**
+				 * Modify attachment from path.
+				 *
+				 * @param string $to
+				 */
+				$from = apply_filters( 'syncs_attachment_from_path', $from );
+
+				// Bail if empty from path.
+				if ( empty( $from ) ) {
+					continue;
+				}
+
+				// Setup to path.
 				$to = sprintf( '%s%s%s/%s', $dir['basedir'], $sitedir, ltrim( $dir['subdir'], '/' ), $size['file'] );
+
+				/**
+				 * Modify attachment to path.
+				 *
+				 * @param string $to
+				 */
+				$to = apply_filters( 'syncs_attachment_to_path', $to );
+
+				// Bail if empty to path.
+				if ( empty( $to ) ) {
+					continue;
+				}
 
 				// Create directories if they don't exists.
 				if ( ! file_exists( dirname( $to ) ) && ! is_dir( dirname( $to ) ) ) {
