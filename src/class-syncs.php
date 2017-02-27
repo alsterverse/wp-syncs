@@ -502,6 +502,18 @@ class Syncs {
 	}
 
 	/**
+	 * Create sync id.
+	 *
+	 * @param  int    $object_id
+	 * @param  string $object_type
+	 *
+	 * @return int
+	 */
+	public function create_sync_id( int $object_id, string $object_type ) {
+		return $this->database->create( $object_id, $object_type );
+	}
+
+	/**
 	 * Sync object from one site to other sites in the network.
 	 *
 	 * @param  int    $object_id
@@ -516,7 +528,7 @@ class Syncs {
 
 		// Create a sync id if empty.
 		if ( empty( $sync_id ) ) {
-			$sync_id = $this->database->create( $object_id, $object_type );
+			$sync_id = $this->create_sync_id( $object_id, $object_type );
 		}
 
 		// Bail if sync id is empty.
