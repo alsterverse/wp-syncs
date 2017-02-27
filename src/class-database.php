@@ -47,13 +47,19 @@ class Database {
 			$sync_id = $this->get_last_sync_id() + 1;
 		}
 
-		return $wpdb->insert( $this->get_table(), [
+		$res = $wpdb->insert( $this->get_table(), [
 			'sync_id'     => $sync_id,
 			'object_id'   => $object_id,
 			'object_type' => $object_type,
 			'site_id'     => $site_id === 0 ? get_current_blog_id() : $site_id,
 			'created_at'  => current_time( 'mysql' )
 		], ['%d', '%d', '%s', '%d', '%s'] );
+
+		if ( $res < 1 ) {
+			return 0;
+		}
+
+		return $sync_id;
 	}
 
 	/**
@@ -68,7 +74,6 @@ class Database {
 	 */
 	public function get( int $object_id, string $object_type, string $key = 'sync_id', int $site_id = 0 ) {
 		global $wpdb;
-
 
 		$value = $wpdb->get_results( $wpdb->prepare( // wpcs: unprepared SQL
 			"SELECT {$key} FROM `{$this->get_table()}` WHERE object_id = %d AND object_type = '%s' AND site_id = %d", // wpcs: unprepared SQL
