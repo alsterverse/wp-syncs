@@ -356,7 +356,9 @@ class Syncs {
 
 			// Add default size as a size.
 			$data['sizes'][] = [
-				'file' => basename( $data['file'] ),
+				'file'   => basename( $data['file'] ),
+				'width'  => $data['width'],
+				'height' => $data['height']
 			];
 
 			// Copy all sizes between sites.
