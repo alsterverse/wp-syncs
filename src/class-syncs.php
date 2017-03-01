@@ -570,7 +570,12 @@ class Syncs {
 	 * @return int
 	 */
 	public function get_sync_id( int $object_id, string $object_type, int $site_id = 0 ) {
-		return $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
+		$sync_id = $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
+
+		// Add our own sync id as a meta key, nothing we use but can be useful for others.
+		update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+
+		return $sync_id;
 	}
 
 	/**
@@ -582,7 +587,24 @@ class Syncs {
 	 * @return int
 	 */
 	public function create_sync_id( int $object_id, string $object_type ) {
-		return $this->database->create( $object_id, $object_type );
+		$sync_id = $this->database->create( $object_id, $object_type );
+
+		// Add our own sync id as a meta key, nothing we use but can be useful for others.
+		update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+
+		return $sync_id;
+	}
+
+	/**
+	 * Delete sync id.
+	 *
+	 * @param  int    $object_id
+	 * @param  string $object_type
+	 */
+	public function delete_sync_id( int $object_id, string $object_type ) {
+		delete_metadata( $object_type, $object_id, 'sync_id' );
+
+		return $this->database->delete( $object_id, $object_type, $this->current_blog_id );
 	}
 
 	/**
@@ -615,11 +637,7 @@ class Syncs {
 
 		// Be sure to delete sync id for this object if delete action.
 		if ( $action === 'delete' ) {
-			$this->database->delete( $object_id, $object_type, $this->current_blog_id );
-			delete_metadata( $object_type, $object_id, 'sync_id' );
-		} else {
-			// Add our own sync id as a meta key, nothing we use but can be useful for others.
-			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+			$this->delete_sync_id( $object_id, $object_type );
 		}
 
 		// Get object that should be synced to other sites.
