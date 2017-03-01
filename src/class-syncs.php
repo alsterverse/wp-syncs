@@ -84,6 +84,42 @@ class Syncs {
 
 		// Setup actons for delete term.
 		add_action( 'delete_term', [$this, 'delete_term'], 999, 3 );
+
+		// Setup filter for sync id meta value for posts.
+		add_action( 'get_post_metadata', [$this, 'get_metadata'], 10, 4 );
+
+		// Setup filter for sync id meta value for terms.
+		add_action( 'get_term_metadata', [$this, 'get_metadata'], 10, 4 );
+	}
+
+	/**
+	 * Create sync id when no sync id exists for terms.
+	 *
+	 * @param  mixed  $value
+	 * @param  int    $object_id
+	 * @param  string $meta_key
+	 * @param  bool   $single
+	 *
+	 * @return mixed
+	 */
+	public function get_metadata( $value, $object_id, $meta_key, $single ) {
+		if ( $meta_key !== 'sync_id' ) {
+			return;
+		}
+
+		// Get object type from current filter.
+		$object_type = str_replace( '_metadata', '', str_replace( 'get_', '', current_filter() ) );
+		$object_type = empty( $object_type ) ? 'post' : $object_type;
+
+		// Get sync id from database.
+		$sync_id = $this->get_sync_id( $object_id, $object_type );
+
+		// If sync id is empty we can create a new one.
+		if ( empty( $sync_id ) ) {
+			$sync_id = $this->create_sync_id( $object_id, $object_type );
+		}
+
+		return $sync_id;
 	}
 
 	/**
@@ -453,9 +489,6 @@ class Syncs {
 			}
 		}
 
-		// Add our own sync id as a meta key, nothing we use but can be useful for others.
-		update_metadata( $object['type'], $object_id, 'sync_id', $sync_id );
-
 		return $object_id;
 	}
 
@@ -544,10 +577,6 @@ class Syncs {
 		// Be sure to delete sync id for this object if delete action.
 		if ( $action === 'delete' ) {
 			$this->database->delete( $object_id, $object_type, $this->current_blog_id );
-			delete_metadata( $object_type, $object_id, 'sync_id' );
-		} else {
-			// Add our own sync id as a meta key, nothing we use but can be useful for others.
-			update_metadata( $object_type, $object_id, 'sync_id', $sync_id );
 		}
 
 		// Get object that should be synced to other sites.
