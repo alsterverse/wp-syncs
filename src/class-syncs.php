@@ -521,6 +521,9 @@ class Syncs {
 			}
 		}
 
+		// Add our own sync id as a meta key, nothing we use but can be useful for others.
+		update_metadata( $object['type'], $object_id, 'sync_id', $sync_id, true );
+
 		return $object_id;
 	}
 
@@ -609,6 +612,10 @@ class Syncs {
 		// Be sure to delete sync id for this object if delete action.
 		if ( $action === 'delete' ) {
 			$this->database->delete( $object_id, $object_type, $this->current_blog_id );
+			delete_metadata( $object_type, $object_id, 'sync_id' );
+		} else {
+			// Add our own sync id as a meta key, nothing we use but can be useful for others.
+			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
 		}
 
 		// Get object that should be synced to other sites.
