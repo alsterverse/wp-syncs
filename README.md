@@ -46,11 +46,11 @@ add_filter( 'syncs_taxonomies', function ( $taxonomies ) {
 
 When a new post, term or attachment is created on a multisite it will be created on the other multisites and all obeject ids will be linked with a global sync id that is stored in the `syncs` table like this:
 
-| id  | sync_id | object_id | object_type | site_id |
-| --- | ------- | --------- | ----------- | ------- |
-| 1   | 1       | 15        | post        | 1       |
-| 2   | 1       | 32        | post        | 2       |
-| 3   | 1       | 90        | post        | 3       |
+id   | sync_id | object_id | object_type | site_id
+---- | ------- | --------- | ----------- | -------
+1    | 1       | 15        | post        | 1
+2    | 1       | 32        | post        | 2
+3    | 1       | 90        | post        | 3
 
 All sync ids are stored as metadata on objects just because of `WP_Query`, when you read `sync_id` with `get_metadata` it actual reads from the `syncs` table.
 
