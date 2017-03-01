@@ -2,7 +2,7 @@
 
 > WIP - Requires PHP 7.0 and WordPress 4.6
 
-Syncs will sync posts and terms between multisites
+Syncs synchronizes attachments, posts and terms between multisites
 
 ## Installation
 
