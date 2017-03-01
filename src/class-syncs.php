@@ -104,7 +104,7 @@ class Syncs {
 	 */
 	public function get_metadata( $value, $object_id, $meta_key, $single ) {
 		if ( $meta_key !== 'sync_id' ) {
-			return;
+			return $value;
 		}
 
 		// Get object type from current filter.
