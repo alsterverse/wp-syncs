@@ -103,6 +103,10 @@ class Syncs {
 	 * @return mixed
 	 */
 	public function get_metadata( $value, $object_id, $meta_key, $single ) {
+		if ( is_multisite() && ms_is_switched() ) {
+			return $value;
+		}
+
 		if ( $meta_key !== 'sync_id' ) {
 			return $value;
 		}
