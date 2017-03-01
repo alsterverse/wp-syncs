@@ -111,6 +111,28 @@ class Syncs {
 		$object_type = str_replace( '_metadata', '', str_replace( 'get_', '', current_filter() ) );
 		$object_type = empty( $object_type ) ? 'post' : $object_type;
 
+		// Check so we use a post type or taxonomy that are configured with syncs.
+		switch ( $object_type ) {
+			case 'post':
+				if ( ! in_array( get_post_type( $object_id ), $this->get_post_types() ) ) {
+					return $value;
+				}
+
+				break;
+			case 'term':
+				$term = get_term( $object_id );
+
+				if ( empty( $term ) ) {
+					return $value;
+				}
+
+				if ( ! in_array( $term->taxonomy, $this->get_taxonomies() ) ) {
+					return $value;
+				}
+
+				break;
+		}
+
 		// Get sync id from database.
 		$sync_id = $this->get_sync_id( $object_id, $object_type );
 
