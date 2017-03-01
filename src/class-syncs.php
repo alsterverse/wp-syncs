@@ -141,7 +141,17 @@ class Syncs {
 			$sync_id = $this->create_sync_id( $object_id, $object_type );
 		}
 
-		return $sync_id;
+		// Bail if empty sync id and return input value.
+		if ( empty( $sync_id ) ) {
+			return $value;
+		}
+
+		// Handle single bool.
+		if ( $single ) {
+			return $sync_id;
+		}
+
+		return [$sync_id];
 	}
 
 	/**
