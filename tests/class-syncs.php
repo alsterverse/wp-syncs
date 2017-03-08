@@ -30,6 +30,16 @@ class Syncs_Test extends \WP_UnitTestCase {
 		unset( $this->syncs );
 	}
 
+	public function test_change_upload_dir() {
+		foreach ( [1, 2] as $id ) {
+			switch_to_blog( $id );
+			$dir = wp_upload_dir();
+			$dir = $this->syncs->change_upload_dir( $dir );
+			$this->assertSame( 'http://example.org/wp-content/uploads', $dir['baseurl'] );
+			restore_current_blog();
+		}
+	}
+
 	public function test_post() {
 		$this->assertFalse( $this->syncs->save_post( 0, null ) );
 

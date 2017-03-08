@@ -47,6 +47,13 @@ class Syncs {
 	protected $taxonomies;
 
 	/**
+	 * Upload paths cache, only calculate paths once.
+	 *
+	 * @var array
+	 */
+	protected $upload_paths_cache = [];
+
+	/**
 	 * Get class instance.
 	 *
 	 * @return \Isotop\Syncs\Syncs
@@ -90,6 +97,39 @@ class Syncs {
 
 		// Setup filter for sync id meta value for terms.
 		add_action( 'get_term_metadata', [$this, 'get_metadata'], 10, 4 );
+
+		// Setup filter for upload directory.
+		add_filter( 'upload_dir', [ $this, 'change_upload_dir' ] );
+	}
+
+	/**
+	 * Change upload path to use same for all sites
+	 *
+	 * @param  array $upload_paths
+	 *
+	 * @return array
+	 */
+	public function change_upload_dir( $upload_paths ) {
+		// Bail if upload paths error.
+		if ( ! empty( $upload_paths['error'] ) ) {
+			return $upload_paths;
+		}
+
+		// Create pload paths cache value if not set.
+		if ( ! isset( $this->upload_paths_cache[ $upload_paths['subdir'] ] ) ) {
+			$upload_folder     = defined( 'UPLOADS' ) ? ABSPATH . UPLOADS : WP_CONTENT_DIR . '/uploads';
+			$wp_content_url    = defined( 'CONTENT_DIR' ) ? CONTENT_DIR : '/wp-content';
+			$upload_folder_url = defined( 'UPLOADS' ) ? UPLOADS : $wp_content_url . '/uploads';
+
+			$upload_paths['basedir'] = $upload_folder;
+			$upload_paths['path']    = $upload_folder . $upload_paths['subdir'];
+			$upload_paths['baseurl'] = home_url( $upload_folder_url );
+			$upload_paths['url']     = home_url( $upload_folder_url . $upload_paths['subdir'] );
+
+			$this->upload_paths_cache[$upload_paths['subdir']] = $upload_paths;
+		}
+
+		return $this->upload_paths_cache[$upload_paths['subdir']];
 	}
 
 	/**
@@ -332,17 +372,6 @@ class Syncs {
 			return false;
 		}
 
-		$dir = wp_upload_dir();
-
-		// Bail if upload directory is empty.
-		if ( empty( $dir ) ) {
-			return false;
-		}
-
-		// Set a custom based dir.
-		$dir['basedir'] = defined( 'UPLOADS' ) ? ABSPATH . UPLOADS : WP_CONTENT_DIR . '/uploads';
-		$dir['basedir'] = rtrim( $dir['basedir'], '/' ) . '/';
-
 		// Get all sites that we should sync.
 		$sites = get_sites( ['network' => 1, 'limit' => 1000] );
 
@@ -353,63 +382,6 @@ class Syncs {
 			}
 
 			switch_to_blog( $site->blog_id );
-
-			// Create a sizes array from original sizes array.
-			$sizes = isset( $data['sizes'] ) ? $data['sizes'] : [];
-
-			// Add default size as a size.
-			$sizes[] = [
-				'file'   => basename( $data['file'] ),
-				'width'  => $data['width'],
-				'height' => $data['height']
-			];
-
-			// Copy all sizes between sites.
-			foreach ( array_values( $sizes ) as $size ) {
-				// Different directories if the blog is one or not.
-				$sitedir = intval( $site->blog_id ) === 1 ? '' : 'sites/' . $site->blog_id . '/';
-
-				// Remove any existing query strings from file name.
-				$filename = preg_replace( '/\?.*/', '', $size['file'] );
-
-				// Setup from path.
-				$from = sprintf( '%s/%s', $dir['path'], $filename );
-
-				/**
-				 * Modify attachment from path.
-				 *
-				 * @param string $to
-				 */
-				$from = apply_filters( 'syncs_attachment_from_path', $from );
-
-				// Bail if empty from path.
-				if ( empty( $from ) ) {
-					continue;
-				}
-
-				// Setup to path.
-				$to = sprintf( '%s%s%s/%s', $dir['basedir'], $sitedir, ltrim( $dir['subdir'], '/' ), $size['file'] );
-
-				/**
-				 * Modify attachment to path.
-				 *
-				 * @param string $to
-				 */
-				$to = apply_filters( 'syncs_attachment_to_path', $to );
-
-				// Bail if empty to path.
-				if ( empty( $to ) ) {
-					continue;
-				}
-
-				// Create directories if they don't exists.
-				if ( ! file_exists( dirname( $to ) ) && ! is_dir( dirname( $to ) ) ) {
-					wp_mkdir_p( dirname( $to ) );
-				}
-
-				// Copy file from path to path.
-				copy( $from, $to );
-			}
 
 			// Update attachment metadata between sites.
 			if ( $sync_id = $this->database->get( $post_id, 'post', 'sync_id', $this->current_blog_id ) ) {
