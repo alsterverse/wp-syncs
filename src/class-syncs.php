@@ -354,15 +354,18 @@ class Syncs {
 
 			switch_to_blog( $site->blog_id );
 
+			// Create a sizes array from original sizes array.
+			$sizes = isset( $data['sizes'] ) ? $data['sizes'] : [];
+
 			// Add default size as a size.
-			$data['sizes'][] = [
+			$sizes[] = [
 				'file'   => basename( $data['file'] ),
 				'width'  => $data['width'],
 				'height' => $data['height']
 			];
 
 			// Copy all sizes between sites.
-			foreach ( array_values( $data['sizes'] ) as $size ) {
+			foreach ( array_values( $sizes ) as $size ) {
 				// Different directories if the blog is one or not.
 				$sitedir = intval( $site->blog_id ) === 1 ? '' : 'sites/' . $site->blog_id . '/';
 
@@ -575,7 +578,9 @@ class Syncs {
 		$sync_id = $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
 
 		// Add our own sync id as a meta key, nothing we use but can be useful for others.
-		update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+		if ( ! empty( $sync_id ) ) {
+			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+		}
 
 		return $sync_id;
 	}
@@ -592,7 +597,9 @@ class Syncs {
 		$sync_id = $this->database->create( $object_id, $object_type );
 
 		// Add our own sync id as a meta key, nothing we use but can be useful for others.
-		update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+		if ( ! empty( $sync_id ) ) {
+			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+		}
 
 		return $sync_id;
 	}
