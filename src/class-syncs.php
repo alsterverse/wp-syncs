@@ -369,8 +369,11 @@ class Syncs {
 				// Different directories if the blog is one or not.
 				$sitedir = intval( $site->blog_id ) === 1 ? '' : 'sites/' . $site->blog_id . '/';
 
+				// Remove any existing query strings from file name.
+				$filename = preg_replace( '/\?.*/', '', $size['file'] );
+
 				// Setup from path.
-				$from = sprintf( '%s/%s', $dir['path'], $size['file'] );
+				$from = sprintf( '%s/%s', $dir['path'], $filename );
 
 				/**
 				 * Modify attachment from path.
