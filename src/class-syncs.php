@@ -589,14 +589,7 @@ class Syncs {
 	 * @return integer
 	 */
 	public function get_sync_id( int $object_id, string $object_type, int $site_id = 0 ) {
-		$sync_id = $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
-
-		// Add our own sync id as a meta key, nothing we use but can be useful for others.
-		if ( ! empty( $sync_id ) ) {
-			update_metadata( $object_type, $object_id, 'sync_id', $sync_id );
-		}
-
-		return $sync_id;
+		return $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
 	}
 
 	/**
@@ -608,14 +601,7 @@ class Syncs {
 	 * @return integer
 	 */
 	public function create_sync_id( int $object_id, string $object_type ) {
-		$sync_id = $this->database->create( $object_id, $object_type );
-
-		// Add our own sync id as a meta key, nothing we use but can be useful for others.
-		if ( ! empty( $sync_id ) ) {
-			update_metadata( $object_type, $object_id, 'sync_id', $sync_id );
-		}
-
-		return $sync_id;
+		return $this->database->create( $object_id, $object_type );
 	}
 
 	/**

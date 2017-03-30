@@ -79,9 +79,6 @@ class Syncs_Test extends \WP_UnitTestCase {
 		// But post title should match since it's the same post.
 		$this->assertSame( $posts[0]->post_title, $post->post_title );
 
-		// Check sync id.
-		$this->assertSame( $this->syncs->get_sync_id( $posts[0]->ID, 'post' ), (int) get_post_meta( $posts[0]->ID, 'sync_id', true ) );
-
 		restore_current_blog();
 
 		$this->assertTrue( $this->syncs->delete_post( $post_id ) );
