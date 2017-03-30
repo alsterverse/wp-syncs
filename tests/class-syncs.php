@@ -86,7 +86,7 @@ class Syncs_Test extends \WP_UnitTestCase {
 		$this->assertSame( $this->syncs->get_sync_id( $posts[0]->ID, 'post' ), get_post_meta( $posts[0]->ID, 'sync_id', true ) );
 
 		// Turn on wp switch, just for testing.
-		$GLOBALS['_wp_switched_stack'] = true;
+		$GLOBALS['_wp_switched_stack'] = [1];
 
 		restore_current_blog();
 
