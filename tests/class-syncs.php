@@ -79,6 +79,15 @@ class Syncs_Test extends \WP_UnitTestCase {
 		// But post title should match since it's the same post.
 		$this->assertSame( $posts[0]->post_title, $post->post_title );
 
+		// Turn off wp switch, just for testing.
+		$GLOBALS['_wp_switched_stack'] = null;
+
+		// Check sync id.
+		$this->assertSame( $this->syncs->get_sync_id( $posts[0]->ID, 'post' ), get_post_meta( $posts[0]->ID, 'sync_id', true ) );
+
+		// Turn on wp switch, just for testing.
+		$GLOBALS['_wp_switched_stack'] = true;
+
 		restore_current_blog();
 
 		$this->assertTrue( $this->syncs->delete_post( $post_id ) );
