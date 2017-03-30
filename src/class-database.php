@@ -14,9 +14,9 @@ class Database {
 	/**
 	 * Delete item from database.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
-	 * @param  int    $site_id
+	 * @param  integer $object_id
+	 * @param  string  $object_type
+	 * @param  integer $site_id
 	 *
 	 * @return bool
 	 */
@@ -33,12 +33,12 @@ class Database {
 	/**
 	 * Create sync id by saving post id to database.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
-	 * @param  int    $sync_id
-	 * @param  int    $site_id
+	 * @param  integer $object_id
+	 * @param  string  $object_type
+	 * @param  integer $sync_id
+	 * @param  integer $site_id
 	 *
-	 * @return bool|int
+	 * @return bool|integer
 	 */
 	public function create( int $object_id, string $object_type, int $sync_id = 0, int $site_id = 0 ) {
 		global $wpdb;
@@ -65,12 +65,12 @@ class Database {
 	/**
 	 * Get value from database based on key.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
-	 * @param  string $key
-	 * @param  int    $site_id
+	 * @param  integer $object_id
+	 * @param  string  $object_type
+	 * @param  string  $key
+	 * @param  integer $site_id
 	 *
-	 * @return int
+	 * @return integer
 	 */
 	public function get( int $object_id, string $object_type, string $key = 'sync_id', int $site_id = 0 ) {
 		global $wpdb;
@@ -92,11 +92,11 @@ class Database {
 	/**
 	 * Get object id by object type and sync id.
 	 *
-	 * @param  string $object_type
-	 * @param  int    $sync_id
-	 * @param  int    $site_id
+	 * @param  string  $object_type
+	 * @param  integer $sync_id
+	 * @param  integer $site_id
 	 *
-	 * @return int
+	 * @return integer
 	 */
 	public function get_object_id( string $object_type, int $sync_id, int $site_id = 0 ) {
 		global $wpdb;
@@ -118,7 +118,7 @@ class Database {
 	/**
 	 * Get last sync id from database.
 	 *
-	 * @return int
+	 * @return integer
 	 */
 	public function get_last_sync_id() {
 		global $wpdb;

@@ -4,5 +4,12 @@
 
   <exclude-pattern>vendor/*</exclude-pattern>
 
-  <rule ref="Isotop"></rule>
+  <rule ref="Isotop">
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+		<exclude name="WordPress.Arrays.ArrayDeclarationSpacing.NoSpaceAfterArrayOpener" />
+		<exclude name="WordPress.Arrays.ArrayDeclarationSpacing.NoSpaceBeforeArrayCloser" />
+		<exclude name="WordPress.Arrays.ArrayDeclarationSpacing.AssociativeKeyFound" />
+		<exclude name="Squiz.Commenting.LongConditionClosingComment.Missing" />
+		<exclude name="WordPress.WP.I18n.MissingTranslatorsComment" />
+	</rule>
 </ruleset>

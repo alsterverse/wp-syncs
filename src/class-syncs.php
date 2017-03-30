@@ -135,10 +135,10 @@ class Syncs {
 	/**
 	 * Create sync id when no sync id exists for terms.
 	 *
-	 * @param  mixed  $value
-	 * @param  int    $object_id
-	 * @param  string $meta_key
-	 * @param  bool   $single
+	 * @param  mixed   $value
+	 * @param  integer $object_id
+	 * @param  string  $meta_key
+	 * @param  bool    $single
 	 *
 	 * @return mixed
 	 */
@@ -158,7 +158,7 @@ class Syncs {
 		// Check so we use a post type or taxonomy that are configured with syncs.
 		switch ( $object_type ) {
 			case 'post':
-				if ( ! in_array( get_post_type( $object_id ), $this->get_post_types() ) ) {
+				if ( ! in_array( get_post_type( $object_id ), $this->get_post_types(), true ) ) {
 					return $value;
 				}
 
@@ -170,7 +170,7 @@ class Syncs {
 					return $value;
 				}
 
-				if ( ! in_array( $term->taxonomy, $this->get_taxonomies() ) ) {
+				if ( ! in_array( $term->taxonomy, $this->get_taxonomies(), true ) ) {
 					return $value;
 				}
 
@@ -201,7 +201,7 @@ class Syncs {
 	/**
 	 * Delete post action callback.
 	 *
-	 * @param  int $post_id
+	 * @param  integer $post_id
 	 *
 	 * @return bool
 	 */
@@ -218,7 +218,7 @@ class Syncs {
 			return false;
 		}
 
-		if ( ! in_array( $post->post_type, $this->get_post_types() ) ) {
+		if ( ! in_array( $post->post_type, $this->get_post_types(), true ) ) {
 			return false;
 		}
 
@@ -228,9 +228,9 @@ class Syncs {
 	/**
 	 * Delete term action callback.
 	 *
-	 * @param  int    $term_id
-	 * @param  int    $tt_id
-	 * @param  string $taxonomy
+	 * @param  integer $term_id
+	 * @param  integer $tt_id
+	 * @param  string  $taxonomy
 	 */
 	public function delete_term( int $term_id, int $tt_id, string $taxonomy ) {
 		if ( is_multisite() && ms_is_switched() ) {
@@ -241,7 +241,7 @@ class Syncs {
 			return false;
 		}
 
-		if ( ! in_array( $taxonomy, $this->get_taxonomies() ) ) {
+		if ( ! in_array( $taxonomy, $this->get_taxonomies(), true ) ) {
 			return false;
 		}
 
@@ -303,7 +303,7 @@ class Syncs {
 	/**
 	 * Save post action callback.
 	 *
-	 * @param  int      $post_id
+	 * @param  integer  $post_id
 	 * @param  \WP_Post $post
 	 *
 	 * @return bool
@@ -321,7 +321,7 @@ class Syncs {
 			return false;
 		}
 
-		if ( ! in_array( $post->post_type, $this->get_post_types() ) ) {
+		if ( ! in_array( $post->post_type, $this->get_post_types(), true ) ) {
 			return false;
 		}
 
@@ -331,9 +331,9 @@ class Syncs {
 	/**
 	 * Save term action callback.
 	 *
-	 * @param  int    $term_id
-	 * @param  int    $tt_id
-	 * @param  string $taxonomy
+	 * @param  integer $term_id
+	 * @param  integer $tt_id
+	 * @param  string  $taxonomy
 	 */
 	public function save_term( int $term_id, int $tt_id, string $taxonomy ) {
 		if ( is_multisite() && ms_is_switched() ) {
@@ -344,7 +344,7 @@ class Syncs {
 			return false;
 		}
 
-		if ( ! in_array( $taxonomy, $this->get_taxonomies() ) ) {
+		if ( ! in_array( $taxonomy, $this->get_taxonomies(), true ) ) {
 			return false;
 		}
 
@@ -356,8 +356,8 @@ class Syncs {
 	/**
 	 * Sync images to other sites on update attachment metadata.
 	 *
-	 * @param  array $data
-	 * @param  int   $post_id
+	 * @param  array   $data
+	 * @param  integer $post_id
 	 *
 	 * @return bool
 	 */
@@ -399,8 +399,8 @@ class Syncs {
 	/**
 	 * Delete object from site.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
+	 * @param  integer $object_id
+	 * @param  string  $object_type
 	 *
 	 * @return bool
 	 */
@@ -418,8 +418,8 @@ class Syncs {
 	/**
 	 * Create object on site.
 	 *
-	 * @param  array $object
-	 * @param  int   $sync_id
+	 * @param  array   $object
+	 * @param  integer $sync_id
 	 *
 	 * @return bool|int
 	 */
@@ -453,6 +453,22 @@ class Syncs {
 
 				// Insert new post to the post table.
 				$object_id = wp_insert_post( $post );
+
+				$taxonomies = isset( $post['taxonomies'] ) ? $post['taxonomies'] : [];
+
+				// Insert all taxonomies and ids from the original post.
+				foreach ( $taxonomies as $taxonomy => $sync_ids ) {
+					$term_ids = [];
+
+					foreach ( $sync_ids as $sync_id ) {
+						if ( $term_id = $this->database->get_object_id( 'term', $sync_id ) ) {
+							$term_ids[] = $term_id;
+						}
+					}
+
+					wp_set_object_terms( $object_id, array_unique( $term_ids ), $taxonomy );
+				}
+
 				break;
 			case 'term':
 				$term = $object['data'];
@@ -514,8 +530,8 @@ class Syncs {
 	/**
 	 * Get object that should be synced.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
+	 * @param  integer $object_id
+	 * @param  string  $object_type
 	 *
 	 * @return array
 	 */
@@ -529,6 +545,29 @@ class Syncs {
 		switch ( $object_type ) {
 			case 'post':
 				$object['data'] = get_post( $object_id, ARRAY_A );
+
+				if ( ! isset( $object['data']['post_type'] ) ) {
+					break;
+				}
+
+				$object['data']['taxonomies'] = [];
+
+				$taxonomies = get_object_taxonomies( $object['data']['post_type'] );
+
+				foreach ( $taxonomies as $taxonomy ) {
+					$terms = wp_get_post_terms( $object['data']['ID'], $taxonomy, ['fields' => 'all'] );
+					$terms = is_array( $terms ) ? $terms : [];
+
+					foreach ( $terms as $term ) {
+						$sync_id = $this->get_sync_id( $term->term_id, 'term' );
+
+						if ( ! isset( $object['data']['taxonomies'][$taxonomy] ) ) {
+							$object['data']['taxonomies'][$taxonomy] = [];
+						}
+
+						$object['data']['taxonomies'][$taxonomy][] = $sync_id;
+					}
+				}
 				break;
 			case 'term':
 				$object['data'] = get_term_by( 'term_id', $object_id, $this->taxonomy, ARRAY_A );
@@ -543,11 +582,11 @@ class Syncs {
 	/**
 	 * Get sync id for given object and site id.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
-	 * @param  int    $site_id
+	 * @param  integer $object_id
+	 * @param  string  $object_type
+	 * @param  integer $site_id
 	 *
-	 * @return int
+	 * @return integer
 	 */
 	public function get_sync_id( int $object_id, string $object_type, int $site_id = 0 ) {
 		$sync_id = $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
@@ -563,10 +602,10 @@ class Syncs {
 	/**
 	 * Create sync id.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
+	 * @param  integer $object_id
+	 * @param  string  $object_type
 	 *
-	 * @return int
+	 * @return integer
 	 */
 	public function create_sync_id( int $object_id, string $object_type ) {
 		$sync_id = $this->database->create( $object_id, $object_type );
@@ -582,8 +621,8 @@ class Syncs {
 	/**
 	 * Delete sync id.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
+	 * @param  integer $object_id
+	 * @param  string  $object_type
 	 */
 	public function delete_sync_id( int $object_id, string $object_type ) {
 		delete_metadata( $object_type, $object_id, 'sync_id' );
@@ -594,9 +633,9 @@ class Syncs {
 	/**
 	 * Sync object from one site to other sites in the network.
 	 *
-	 * @param  int    $object_id
-	 * @param  string $object_type
-	 * @param  string $action
+	 * @param  integer $object_id
+	 * @param  string  $object_type
+	 * @param  string  $action
 	 *
 	 * @return bool
 	 */
