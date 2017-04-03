@@ -593,7 +593,7 @@ class Syncs {
 
 		// Add our own sync id as a meta key, nothing we use but can be useful for others.
  		if ( ! empty( $sync_id ) ) {
- 			update_metadata( $object_type, $object_id, 'sync_id', $sync_id );
+ 			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
  		}
 
 		return $sync_id;
@@ -612,7 +612,7 @@ class Syncs {
 
 		// Add our own sync id as a meta key, nothing we use but can be useful for others.
  		if ( ! empty( $sync_id ) ) {
- 			update_metadata( $object_type, $object_id, 'sync_id', $sync_id );
+ 			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
  		}
 
 		 return $sync_id;
