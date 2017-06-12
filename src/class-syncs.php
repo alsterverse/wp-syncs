@@ -648,7 +648,13 @@ class Syncs {
 			$sync_id = $this->create_sync_id( $object_id, $object_type );
 		}
 
-		// Fire a action before synchronizing object id between sites.
+		/**
+		 * Fire a action before synchronizing object id between sites.
+		 *
+		 * @param int    $object_id
+		 * @param string $object_type
+		 * @param string $action
+		 */
 		do_action( 'syncs_before_sync', $object_id, $object_type, $action );
 
 		// Bail if sync id is empty.
@@ -713,7 +719,13 @@ class Syncs {
 			restore_current_blog();
 		}
 
-		// Fire a action after synchronizing object id between sites.
+		/**
+		 * Fire a action after synchronizing object id between sites.
+		 *
+		 * @param int    $object_id
+		 * @param string $object_type
+		 * @param string $action
+		 */
 		do_action( 'syncs_after_sync', $object_id, $object_type, $action );
 
 		return true;
