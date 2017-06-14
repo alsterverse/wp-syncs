@@ -580,6 +580,19 @@ class Syncs {
 	}
 
 	/**
+	 * Get object id by object type, sync id and site id.
+	 *
+	 * @param  string $object_type
+	 * @param  int    $sync_id
+	 * @param  int    $site_id
+	 *
+	 * @return int
+	 */
+	public function get_object_id( string $object_type, int $sync_id, int $site_id = 0 ) {
+		return $this->database->get_object_id( $object_type, $sync_id, $site_id );
+	}
+
+	/**
 	 * Get sync id for given object and site id.
 	 *
 	 * @param  integer $object_id
