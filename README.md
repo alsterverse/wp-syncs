@@ -1,6 +1,6 @@
 # Syncs [![Build Status](https://travis-ci.org/isotopsweden/wp-syncs.svg?branch=master)](https://travis-ci.org/isotopsweden/wp-syncs)
 
-> WIP - Requires PHP 7.0 and WordPress 4.6
+> Requires PHP 7.0 and WordPress 4.6
 
 Syncs synchronizes attachments, posts and terms between multisites
 
