@@ -255,7 +255,7 @@ class Syncs {
 	 *
 	 * @return array
 	 */
-	protected function get_post_types() {
+	public function get_post_types() {
 		if ( empty( $this->post_types ) ) {
 			$post_types = get_post_types( ['syncs' => true] );
 			$post_types = array_values( $post_types );
@@ -280,7 +280,7 @@ class Syncs {
 	 *
 	 * @return array
 	 */
-	protected function get_taxonomies() {
+	public function get_taxonomies() {
 		if ( empty( $this->taxonomies ) ) {
 			$taxonomies = get_taxonomies( ['syncs' => true] );
 			$taxonomies = array_values( $taxonomies );

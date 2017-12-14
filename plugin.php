@@ -19,5 +19,12 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
  * Boot the plugin.
  */
 add_action( 'plugins_loaded', function () {
-	return \Isotop\Syncs\Syncs::instance();
+	\Isotop\Syncs\Syncs::instance();
+
+	// Bootstrap Cargo CLI.
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		WP_CLI::add_command( 'syncs', '\\Isotop\\Syncs\\CLI\\CLI' );
+		WP_CLI::add_command( 'syncs sync', '\\Isotop\\Syncs\\CLI\\Commands\\Sync' );
+	}
+
 } );

@@ -62,6 +62,10 @@ When a post, term or attachment is updated on a multisite the master it's the mu
 
 When a post, term or attachment is deleted it will be deleted on all multisites and the `sync_id` will be deleted.
 
+### WP CLI
+
+You can run `wp syncs sync` to synchronizes all posts from one site to all other sites.
+
 ## License
 
 MIT © Isotop
