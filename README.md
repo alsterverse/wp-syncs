@@ -1,4 +1,4 @@
-# Syncs [![Build Status](https://travis-ci.org/isotopsweden/wp-syncs.svg?branch=master)](https://travis-ci.org/isotopsweden/wp-syncs)
+# Syncs [![Build Status](https://travis-ci.org/isotopsweden/wp-syncs.svg?branch=master)](https://travis-ci.org/isotopsweden/wp-syncs) [![codecov](https://codecov.io/gh/isotopsweden/wp-syncs/branch/master/graph/badge.svg)](https://codecov.io/gh/isotopsweden/wp-syncs)
 
 > Requires PHP 7.0 and WordPress 4.6
 
