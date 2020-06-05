@@ -6,8 +6,8 @@
  * Description: Syncs synchronizes posts and taxonomies between sites.
  * Author: Isotop
  * Author URI: https://www.isotop.se
- * Version: 1.0.0
- * Textdomain: wp-syncs
+ * Version: 1.0.1
+ * Text Domain: wp-syncs
  */
 
 // Load Composer autoload if it exists.
