@@ -602,12 +602,18 @@ class Syncs {
 	 * @return integer
 	 */
 	public function get_sync_id( int $object_id, string $object_type, int $site_id = 0 ) {
-		$sync_id = $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
+		$cache_key = "wp-syncs-$object_id-$object_type-$site_id";
+		$sync_id   = wp_cache_get( $cache_key, 'wp_syncs_id_cache_group' );
 
-		// Add our own sync id as a meta key, nothing we use but can be useful for others.
- 		if ( ! empty( $sync_id ) ) {
- 			update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
- 		}
+		if ( ! $sync_id ) {
+			$sync_id = $this->database->get( $object_id, $object_type, 'sync_id', $site_id );
+			wp_cache_set( $cache_key, $sync_id, 'wp_syncs_id_cache_group' );
+
+			// Add our own sync id as a meta key, nothing we use but can be useful for others.
+			if ( ! empty( $sync_id ) ) {
+				update_metadata( $object_type, $object_id, 'sync_id', $sync_id, true );
+			}
+		}
 
 		return $sync_id;
 	}
