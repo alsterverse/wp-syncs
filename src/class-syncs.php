@@ -100,6 +100,22 @@ class Syncs {
 
 		// Setup filter for upload directory.
 		add_filter( 'upload_dir', [ $this, 'change_upload_dir' ] );
+
+		// New filter in WP 5
+		add_filter( 'pre_delete_attachment', [ $this, 'pre_delete_attachment' ] );
+	}
+
+	/**
+	 * Filter don't delete attachment if syncing
+	 *
+	 * @return bool
+	 */
+	public function pre_delete_attachment() {
+		if ( is_multisite() && ms_is_switched() ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -309,6 +325,7 @@ class Syncs {
 	 * @return bool
 	 */
 	public function save_post( int $post_id, $post = null ) {
+
 		if ( is_multisite() && ms_is_switched() ) {
 			return false;
 		}
