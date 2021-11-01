@@ -6,6 +6,11 @@ use Isotop\Syncs\Syncs;
 
 class Syncs_Test extends \WP_UnitTestCase {
 
+	/**
+	 * @var Syncs
+	 */
+	private $syncs;
+
 	public function setUp() {
 		parent::setUp();
 
@@ -15,20 +20,33 @@ class Syncs_Test extends \WP_UnitTestCase {
 	public static function wpSetUpBeforeClass( $factory ) {
 		$factory->blog->create( [
 			'domain' => 'example.org',
-			'path'   => '/foo/'
+			'path'   => '/foo/',
 		] );
+
+		// Sorry
+		add_filter( 'syncs_post_types',
+			function () {
+				return [ 'attachment' , 'post'];
+			} );
 	}
 
+	/**
+	 *
+	 */
 	public static function wpTearDownAfterClass() {
 		wpmu_delete_blog( 2, true );
 		wp_update_network_site_counts();
 	}
 
+	/**
+	 *
+	 */
 	public function tearDown() {
 		parent::tearDown();
 
 		unset( $this->syncs );
 	}
+
 
 	public function test_change_upload_dir() {
 		foreach ( [1, 2] as $id ) {
@@ -40,18 +58,18 @@ class Syncs_Test extends \WP_UnitTestCase {
 		}
 	}
 
+
 	public function test_post() {
 		$this->assertFalse( $this->syncs->save_post( 0, null ) );
 
 		$post_id = $this->factory->post->create();
 		$post    = get_post( $post_id );
 
+		$post_invalid_post_type = $post;
+		$post_invalid_post_type->post_type = "test";
 		// Not a valid post type.
-		$this->assertFalse( $this->syncs->save_post( $post_id, $post ) );
+		$this->assertFalse( $this->syncs->save_post( $post_id, $post_invalid_post_type ) );
 
-		add_filter( 'syncs_post_types', function () {
-			return ['post'];
-		} );
 
 		$this->assertTrue( $this->syncs->save_post( $post_id, get_post( $post_id ) ) );
 
@@ -119,6 +137,68 @@ class Syncs_Test extends \WP_UnitTestCase {
 		restore_current_blog();
 	}
 
+	/**
+	 * Test attachment async
+	 */
+	public function test_attachment() {
+
+
+		restore_current_blog();
+
+
+		$upload_file = DIR_TESTDATA . '/images/2004-07-22-DSC_0007.jpg';
+
+		$attachment_id = $this->factory->attachment->create_upload_object( $upload_file, 0 );
+
+
+		restore_current_blog();
+
+		$post = get_post( $attachment_id );
+
+		$file = get_attached_file( $attachment_id );
+
+		$this->assertTrue( is_string( $file ) );
+		$this->assertFileExists( $file );
+
+
+		$this->assertFileEquals( $upload_file, $file );
+
+
+		$GLOBALS['_wp_switched_stack'] = null;
+		$this->assertTrue( $this->syncs->save_post( $attachment_id, $post ) );
+
+		$sync_id = $this->syncs->get_sync_id( $attachment_id, 'post', 1 );
+
+		$attachment_id_site2 = $this->syncs->get_object_id( 'post' , $sync_id , 2 );
+
+
+		switch_to_blog( 2 );
+
+		$post_blog2 = get_post( $attachment_id_site2 );
+
+		$this->assertSame( $post_blog2->post_title, $post->post_title );
+
+
+		switch_to_blog(1);
+
+		$deleted = wp_delete_post( $attachment_id , true );
+
+
+		$this->assertFileNotExists( $file );
+
+
+		switch_to_blog( 2 );
+
+		$post_deleted_blog2 = get_post( $attachment_id_site2 );
+
+		restore_current_blog();
+
+
+
+
+
+	}
+
 	public function test_term() {
 		$this->assertFalse( $this->syncs->save_term( 0, 0, 'category' ) );
 
@@ -128,15 +208,16 @@ class Syncs_Test extends \WP_UnitTestCase {
 		// Not a valid taxonomy.
 		$this->assertFalse( $this->syncs->save_term( $term_id, 0, 'category' ) );
 
-		add_filter( 'syncs_taxonomies', function () {
-			return ['category'];
+		add_filter( 'syncs_taxonomies',
+			function () {
+			return [ 'category' ];
 		} );
 
 		$this->assertTrue( $this->syncs->save_term( $term_id, 0, 'category' ) );
 
 		switch_to_blog( 2 );
 
-		$terms = get_categories( ['hide_empty' => false] );
+		$terms = get_categories( [ 'hide_empty' => false ] );
 
 		$this->assertSame( 2, get_current_blog_id() );
 		$this->assertSame( 2, count( $terms ) );
@@ -153,7 +234,7 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		switch_to_blog( 2 );
 
-		$terms = get_categories( ['hide_empty' => false] );
+		$terms = get_categories( [ 'hide_empty' => false ] );
 
 		$this->assertSame( 2, get_current_blog_id() );
 		$this->assertSame( 2, count( $terms ) );
@@ -167,7 +248,7 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		switch_to_blog( 2 );
 
-		$terms = get_categories( ['hide_empty' => false] );
+		$terms = get_categories( [ 'hide_empty' => false ] );
 
 		$this->assertSame( 2, get_current_blog_id() );
 		$this->assertSame( 1, count( $terms ) );
@@ -177,4 +258,5 @@ class Syncs_Test extends \WP_UnitTestCase {
 
 		restore_current_blog();
 	}
+
 }

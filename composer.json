@@ -28,14 +28,17 @@
     ]
   },
   "require": {
-    "php": "^7.0",
+    "php": "^7",
     "composer/installers": "~1.0"
   },
   "require-dev": {
-    "frozzare/wp-test-suite": "~1.0",
+    "phpunit/phpunit": "^5 || ^6 || ^7",
+    "roots/wordpress": "^5.8.1",
+    "wp-phpunit/wp-phpunit": "^5.8.1",
     "isotopsweden/isotopcs": "dev-master"
   },
   "scripts": {
+    "test": "./vendor/bin/phpunit",
     "config-isotopcs": [
       "if [ -f vendor/bin/phpcs ]; then \"vendor/bin/phpcs\" --config-set installed_paths ../../../vendor/wp-coding-standards/wpcs,../../../vendor/isotopsweden/isotopcs; fi",
       "if [ -f vendor/bin/phpcs ]; then \"vendor/bin/phpcs\" --config-set default_standard Isotop; fi"

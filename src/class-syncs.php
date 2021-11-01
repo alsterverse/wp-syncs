@@ -103,6 +103,21 @@ class Syncs {
 	}
 
 	/**
+	 * Filter don't delete attachment if syncing
+	 *
+	 * @return bool
+	 */
+	public function wp_delete_file( $file ) {
+
+
+		if ( is_multisite() && ms_is_switched() ) {
+			return '';
+		}
+
+		return $file;
+	}
+
+	/**
 	 * Change upload path to use same for all sites
 	 *
 	 * @param  array $upload_paths
@@ -309,6 +324,7 @@ class Syncs {
 	 * @return bool
 	 */
 	public function save_post( int $post_id, $post = null ) {
+
 		if ( is_multisite() && ms_is_switched() ) {
 			return false;
 		}
@@ -697,6 +713,7 @@ class Syncs {
 		// Get all sites that we should sync.
 		$sites = get_sites( ['network' => 1, 'limit' => 1000] );
 
+
 		foreach ( $sites as $site ) {
 			// Don't sync post on the current site.
 			if ( intval( $site->blog_id ) === $this->current_blog_id ) {
@@ -707,6 +724,12 @@ class Syncs {
 
 			$deleted = false;
 
+			// New for WP 5
+			if($action !== 'delete') {
+				add_filter( 'wp_delete_file', [ $this, 'wp_delete_file' ] );
+			}
+
+
 			// Delete object if any object id can be found from the object type, sync id and site id.
 			// Then delete sync id row for that object id and object type.
 			if ( $object_id = $this->database->get_object_id( $object_type, $sync_id ) ) {
@@ -715,6 +738,12 @@ class Syncs {
 				}
 			} else {
 				$deleted = true;
+			}
+
+			// New for WP 5
+			if($action !== 'delete') {
+				remove_filter( 'wp_delete_file' , [ $this, 'wp_delete_file' ]);
+
 			}
 
 			// Bail if not deleted.
@@ -737,6 +766,8 @@ class Syncs {
 
 			restore_current_blog();
 		}
+
+
 
 		/**
 		 * Fire a action after synchronizing object id between sites.
